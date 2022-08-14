@@ -4,9 +4,11 @@ sys.setrecursionlimit(5000)
 from pygame.math import Vector2
 import random
 
+# pygame.mixer.pre_init(44100,-16,2,512)
+
 icon = pygame.image.load("sgame.png")
 pygame.display.set_icon(icon)
-
+background = pygame.image.load("images/game_over.jpeg")
 class SNAKE:
     def __init__(self):
         self.body = [Vector2(5,10), Vector2(4,10), Vector2(2,10)]
@@ -31,7 +33,9 @@ class SNAKE:
         self.body_bl = pygame.image.load("images/body_bl.png").convert_alpha()
         self.body_br = pygame.image.load("images/body_br.png").convert_alpha()
         
-     
+        self.crunch_sound = pygame.mixer.Sound("Sound_crunch.wav")
+        self.gameo = pygame.image.load("images/game_over.jpeg").convert_alpha()
+    
     def draw_snake(self):
         self.update_head()
         self.update_tail()
@@ -88,11 +92,18 @@ class SNAKE:
             body_copy.insert(0,body_copy[0] + self.direction)
             self.body = body_copy[:] 
             
+    def sound(self):
+        self.crunch_sound.play()
+    
+    def last(self):
+        self.gameo.blit()
             
     def add_block(self):
         self.new_block = True
     
-        
+    def reset(self):
+    	self.body = [Vector2(5,10),Vector2(4,10),Vector2(3,10)]
+       
 class FRUIT:
     def __init__(self):
         self.randomize()
@@ -127,6 +138,14 @@ class MAIN:
         if self.fruit.pos == self.snake.body[0]:
             self.fruit.randomize() 
             self.snake.add_block()
+            self.snake.sound()
+        for block in self.snake.body[1:]:
+            if block == self.fruit.pos:
+                self.fruit.randomize()
+        
+    def game_over(self):
+        self.game_over()
+        
         
     def check_fail(self):
         if not 0 <= self.snake.body[0].x < cell_number or not 0 <= self.snake.body[0].y < cell_number:
@@ -134,11 +153,8 @@ class MAIN:
             
         for block in self.snake.body[1:]:
             if block == self.snake.body[0]:
-                  self.game_over()
-    
-    def game_over(self):
-          self.game_over()
-          
+                  self.game_over()     
+            
     def grass(self):
         g_color = (115, 212, 135)
         for row in range (cell_number):
@@ -161,10 +177,7 @@ class MAIN:
         score_rect = score_surface.get_rect(center = (score_x, score_y))
         surface.blit(score_surface,score_rect)
         apple_rect = apple.get_rect(midright = (score_rect.left, score_rect.centery))
-        # bg_rect = pygame.Rect(apple_rect.left, apple_rect.top, apple_rect.width + score_rect.width, apple_rect.height)
         surface.blit(apple,apple_rect)
-        
-        
         
 pygame.init()
 cell_size = 40
@@ -176,7 +189,7 @@ game_font = pygame.font.SysFont("freesansbold", 30)
 
 
 SCREEN_UPDATE = pygame.USEREVENT
-pygame.time.set_timer(SCREEN_UPDATE, 250) 
+pygame.time.set_timer(SCREEN_UPDATE, 150) 
 
 game = MAIN()
 
@@ -186,6 +199,7 @@ while TRUE:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+            
         if event.type == SCREEN_UPDATE:
             game.update()
         if event.type == pygame.KEYDOWN:
